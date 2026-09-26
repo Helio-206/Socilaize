@@ -52,6 +52,7 @@ import { GlassSurface } from '@/components/ui/glass-surface';
 import { Text, TextInput, type TextInputHandle } from '@/components/ui/text';
 import { appAlert } from '@/data/dialog-store';
 import { ApiError } from '@/data/api/client';
+import { filterChatMessages, type ChatSearchFilter } from '@/data/chat-search';
 import { AppIcon } from '@/components/ui/app-icon';
 import { CachedImage } from '@/components/ui/cached-image';
 import { ForwardPicker } from '@/components/chat/forward-picker';
@@ -308,6 +309,7 @@ export default function ChatScreen() {
   const [draft, setDraft] = useState('');
   const [searchMode, setSearchMode] = useState(false);
   const [query, setQuery] = useState('');
+  const [searchFilter, setSearchFilter] = useState<ChatSearchFilter>('all');
   const [reactionsMap, setReactionsMap] = useState<Record<string, ReactionEntry[]>>({});
   const [menuTarget, setMenuTarget] = useState<MenuTarget | null>(null);
   const [replyTarget, setReplyTarget] = useState<Message | null>(null);
@@ -855,12 +857,20 @@ export default function ChatScreen() {
 
   const trimmedQuery = query.trim();
   const searching = searchMode && trimmedQuery.length > 0;
+  const hasSearchCriteria = trimmedQuery.length > 0 || searchFilter !== 'all';
+  const searchActive = searchMode && hasSearchCriteria;
+  const searchFilterOptions: { value: ChatSearchFilter; label: string }[] = [
+    { value: 'all', label: t('chat.search_filter_all') },
+    { value: 'media', label: t('chat.search_filter_media') },
+    { value: 'documents', label: t('chat.search_filter_documents') },
+    { value: 'links', label: t('chat.search_filter_links') },
+    { value: 'audio', label: t('chat.search_filter_audio') },
+  ];
 
   const filtered = useMemo<Message[]>(() => {
-    if (!searching) return visible;
-    const q = trimmedQuery.toLowerCase();
-    return visible.filter((m) => !m.system && m.text.toLowerCase().includes(q));
-  }, [visible, searching, trimmedQuery]);
+    if (!searchActive) return visible;
+    return filterChatMessages(visible, trimmedQuery, searchFilter);
+  }, [visible, searchActive, trimmedQuery, searchFilter]);
 
   const grouped = useMemo(() => groupMessages(filtered), [filtered]);
 
@@ -2203,6 +2213,7 @@ export default function ChatScreen() {
   const closeSearch = () => {
     setSearchMode(false);
     setQuery('');
+    setSearchFilter('all');
   };
 
   /**
@@ -2307,31 +2318,64 @@ export default function ChatScreen() {
         ) : (
         <StateTransition transitionKey={searchMode}>
         {searchMode ? (
-          <View style={[styles.header, { borderBottomColor: colors.divider }]}>
-            <Pressable
-              onPress={closeSearch}
-              hitSlop={12}
-              style={styles.backBtn}
-              accessibilityLabel={t('chat.close_search')}
-            >
-              <Ionicons name="chevron-back" size={24} color={colors.text} />
-            </Pressable>
-            <View style={[styles.searchField, { backgroundColor: colors.surfaceMuted }]}>
-              <Ionicons name="search" size={16} color={colors.textMuted} />
-              <TextInput
-                value={query}
-                onChangeText={setQuery}
-                placeholder={t('chat.search_placeholder')}
-                placeholderTextColor={colors.textMuted}
-                autoFocus
-                style={[styles.searchInput, { color: colors.text }]}
-              />
-              {trimmedQuery.length > 0 ? (
-                <Pressable onPress={() => setQuery('')} hitSlop={8}>
-                  <Ionicons name="close-circle" size={18} color={colors.textMuted} />
-                </Pressable>
-              ) : null}
+          <View style={[styles.searchHeader, { borderBottomColor: colors.divider }]}>
+            <View style={styles.searchHeaderRow}>
+              <Pressable
+                onPress={closeSearch}
+                hitSlop={12}
+                style={styles.backBtn}
+                accessibilityLabel={t('chat.close_search')}
+              >
+                <Ionicons name="chevron-back" size={24} color={colors.text} />
+              </Pressable>
+              <View style={[styles.searchField, { backgroundColor: colors.surfaceMuted }]}>
+                <Ionicons name="search" size={16} color={colors.textMuted} />
+                <TextInput
+                  value={query}
+                  onChangeText={setQuery}
+                  placeholder={t('chat.search_placeholder')}
+                  placeholderTextColor={colors.textMuted}
+                  autoFocus
+                  style={[styles.searchInput, { color: colors.text }]}
+                />
+                {trimmedQuery.length > 0 ? (
+                  <Pressable onPress={() => setQuery('')} hitSlop={8}>
+                    <Ionicons name="close-circle" size={18} color={colors.textMuted} />
+                  </Pressable>
+                ) : null}
+              </View>
             </View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.searchFilters}
+              keyboardShouldPersistTaps="handled"
+            >
+              {searchFilterOptions.map((option) => {
+                const selected = searchFilter === option.value;
+                return (
+                  <Pressable
+                    key={option.value}
+                    onPress={() => setSearchFilter(option.value)}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected }}
+                    style={[
+                      styles.searchFilterChip,
+                      { backgroundColor: selected ? colors.primary : colors.surfaceMuted },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.searchFilterText,
+                        { color: selected ? colors.onPrimary : colors.textSecondary },
+                      ]}
+                    >
+                      {option.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
           </View>
         ) : (
           <View style={[styles.header, { borderBottomColor: colors.divider }]}>
@@ -2568,11 +2612,15 @@ export default function ChatScreen() {
               ) : null
             }
             ListEmptyComponent={
-              searching ? (
+              searchActive ? (
                 <EmptyState
                   icon="search-outline"
                   title={t('chat.search_empty_title')}
-                  description={t('chat.search_empty', { query: trimmedQuery })}
+                  description={
+                    trimmedQuery
+                      ? t('chat.search_empty', { query: trimmedQuery })
+                      : t('chat.search_filter_empty')
+                  }
                 />
               ) : null
             }
@@ -4410,6 +4458,33 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.sm,
     gap: Spacing.xs,
     borderBottomWidth: 1,
+  },
+  searchHeader: {
+    paddingHorizontal: Spacing.sm,
+    paddingTop: Spacing.sm,
+    paddingBottom: Spacing.xs,
+    gap: Spacing.sm,
+    borderBottomWidth: 1,
+  },
+  searchHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+  },
+  searchFilters: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    paddingRight: Spacing.sm,
+  },
+  searchFilterChip: {
+    borderRadius: Radii.pill,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
+  },
+  searchFilterText: {
+    ...Typography.caption,
+    fontWeight: '600',
   },
   backBtn: {
     width: 36,
