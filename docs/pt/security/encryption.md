@@ -128,6 +128,7 @@ A ponte do WhatsApp rejeitada e o raciocínio completo estão em
 Dizemos em voz alta para ninguém ser apanhado de surpresa:
 
 - **Metadados.** O servidor vê quem fala com quem e quando. Mitigações estilo sealed-sender estão no seguimento.
+- **Média das chamadas de grupo.** As chamadas de grupo ainda não usam E2EE do LiveKit. O SFU pode aceder ao áudio e vídeo; a app agora avisa disso no ecrã da chamada.
 - **Um dispositivo comprometido enquanto desbloqueado.** Quem tem o telefone desbloqueado pode ler tudo; SQLCipher não defende disso.
 
 Qualquer coisa para além desta lista deve ser reportada como bug, não como feature.
