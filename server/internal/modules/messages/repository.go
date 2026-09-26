@@ -501,6 +501,7 @@ const messageSelectBase = `
 	       m.created_at, m.edited_at, m.deleted_at,
 	       COALESCE(u.display_name, ''), COALESCE(u.avatar_uri, ''),
 	       rc.delivered_to, rc.read_by,
+	       COALESCE(m.sender_id <> $1 AND (cpv.last_read_message_id IS NULL OR m.id > cpv.last_read_message_id), FALSE) AS is_unread,
 	       m.forward_count, m.source_channel_id::text, m.source_post_id::text,
 	       m.expires_at,
 	       m.view_limit, COALESCE(mv.views, 0),
@@ -613,6 +614,7 @@ func (r *Repository) ListMessages(ctx context.Context, chatID, viewerID uuid.UUI
 		var m messageRow
 		var senderName, senderAvatar string
 		var deliveredTo, readBy, forwardCount int
+		var isUnread bool
 		var srcChannel, srcPost *string
 		var expiresAt *time.Time
 		var viewLimit *int
@@ -620,7 +622,7 @@ func (r *Repository) ListMessages(ctx context.Context, chatID, viewerID uuid.UUI
 		var reactionsJSON string
 		if err := rows.Scan(&m.ID, &m.ChatID, &m.SenderID, &m.Content,
 			&m.MessageType, &m.ReplyToID, &m.CreatedAt, &m.EditedAt, &m.DeletedAt,
-			&senderName, &senderAvatar, &deliveredTo, &readBy,
+			&senderName, &senderAvatar, &deliveredTo, &readBy, &isUnread,
 			&forwardCount, &srcChannel, &srcPost, &expiresAt,
 			&viewLimit, &viewsUsed, &reactionsJSON); err != nil {
 			return nil, err
@@ -655,6 +657,7 @@ func (r *Repository) ListMessages(ctx context.Context, chatID, viewerID uuid.UUI
 			SenderAvatar:    senderAvatar,
 			DeliveredTo:     deliveredTo,
 			ReadBy:          readByFor(readBy, hideRead),
+			IsUnread:        isUnread,
 			ForwardCount:    forwardCount,
 			ViewLimit:       viewLimit,
 			ViewsLeft:       viewsLeft,

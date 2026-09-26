@@ -25,6 +25,14 @@ test('media includes photos, videos, and stickers but excludes audio', () => {
   expect(matchesChatSearchFilter(message({ media: { type: 'audio', uri: 'audio' } }), 'media')).toBe(false);
 });
 
+test('unread includes only inbound messages flagged by the server read cursor', () => {
+  const unread = message({ id: 'unread', text: 'Unread message', isUnread: true });
+  expect(matchesChatSearchFilter(unread, 'unread')).toBe(true);
+  expect(matchesChatSearchFilter(message({ isUnread: false }), 'unread')).toBe(false);
+  expect(matchesChatSearchFilter(message({ isUnread: true, fromMe: true }), 'unread')).toBe(false);
+  expect(filterChatMessages([unread], 'unread', 'unread')).toEqual([unread]);
+});
+
 test('documents and audio match their attachment types', () => {
   expect(matchesChatSearchFilter(message({ attachment: { kind: 'document', name: 'a.pdf', ext: 'PDF', sizeLabel: '' } }), 'documents')).toBe(true);
   expect(matchesChatSearchFilter(message({ media: { type: 'audio', uri: 'audio' } }), 'audio')).toBe(true);

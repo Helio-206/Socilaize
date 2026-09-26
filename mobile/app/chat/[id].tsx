@@ -861,6 +861,7 @@ export default function ChatScreen() {
   const searchActive = searchMode && hasSearchCriteria;
   const searchFilterOptions: { value: ChatSearchFilter; label: string }[] = [
     { value: 'all', label: t('chat.search_filter_all') },
+    { value: 'unread', label: t('chats.filter_unread') },
     { value: 'media', label: t('chat.search_filter_media') },
     { value: 'documents', label: t('chat.search_filter_documents') },
     { value: 'links', label: t('chat.search_filter_links') },

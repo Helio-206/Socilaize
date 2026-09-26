@@ -77,6 +77,8 @@ export interface MessageDTO {
   sender_avatar?: string;
   delivered_to?: number;
   read_by?: number;
+  /** Whether this inbound message was beyond the caller's read cursor at history load. */
+  is_unread?: boolean;
   /** Set once read, in a chat with a timer. The countdown runs to this. */
   expires_at?: string;
   /** 0 when written here; 1+ once it has been passed along. */

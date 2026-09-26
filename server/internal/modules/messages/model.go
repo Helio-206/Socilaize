@@ -148,6 +148,10 @@ type Message struct {
 	SourcePostID    *string `json:"source_post_id,omitempty"`
 	DeliveredTo     int     `json:"delivered_to,omitempty"`
 	ReadBy          int     `json:"read_by,omitempty"`
+	// IsUnread is relative to the requesting participant's read cursor.
+	// It lets clients filter unread messages even after opening the chat
+	// advances that cursor.
+	IsUnread bool `json:"is_unread"`
 	// ViewLimit caps how many times each recipient may open the message.
 	// Nil means unlimited.
 	ViewLimit *int `json:"view_limit,omitempty"`
