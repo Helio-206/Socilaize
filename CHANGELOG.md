@@ -19,6 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### ✏️ Changed (Alterado)
 
+#### Definições
+- A opção de FAQ abre a documentação; a opção de contacto sem canal de suporte foi removida
+- O botão redundante e sem ação para adicionar membros foi removido; administradores continuam a usar a opção funcional na secção de membros
+
 #### Stories
 - `POST /api/stories/:id/react` aceita `{"reactions": [...]}` e responde com o story e as contagens novas. A forma antiga `{"emoji": "..."}` continua a funcionar e substitui o conjunto, como sempre fez
 - `GET /api/stories/:id/viewers` traz `emojis` por espectador; `emoji` fica a ser o primeiro deles, para clientes que não conhecem a lista
