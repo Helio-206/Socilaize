@@ -1,6 +1,6 @@
 import type { Message } from './mock';
 
-export type ChatSearchFilter = 'all' | 'unread' | 'media' | 'documents' | 'links' | 'audio';
+export type ChatSearchFilter = 'all' | 'unread' | 'starred' | 'media' | 'documents' | 'links' | 'audio';
 
 const LINK_PATTERN = /\b(?:https?:\/\/|www\.)[^\s<>()]+/i;
 
@@ -10,6 +10,8 @@ export function matchesChatSearchFilter(message: Message, filter: ChatSearchFilt
       return true;
     case 'unread':
       return message.isUnread === true && !message.fromMe;
+    case 'starred':
+      return message.isStarred === true;
     case 'media':
       return (
         message.media?.type === 'image' ||

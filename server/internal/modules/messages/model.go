@@ -152,6 +152,8 @@ type Message struct {
 	// It lets clients filter unread messages even after opening the chat
 	// advances that cursor.
 	IsUnread bool `json:"is_unread"`
+	// IsStarred is scoped to the requesting participant.
+	IsStarred bool `json:"is_starred"`
 	// ViewLimit caps how many times each recipient may open the message.
 	// Nil means unlimited.
 	ViewLimit *int `json:"view_limit,omitempty"`
